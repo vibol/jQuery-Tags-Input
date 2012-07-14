@@ -184,6 +184,8 @@
       autocomplete: {selectFirst: false },
       'hide':true,
       'delimiter':',',
+      'delimiters':[','],
+      allowedChars:'', // e.g. '[a-z0-9]'
       'unique':true,
       removeWithBackspace:true,
       placeholderColor:'#666666',
@@ -291,7 +293,30 @@
 				}
 				// if user types a comma, create a new tag
 				$(data.fake_input).bind('keypress',data,function(event) {
-					if (event.which==event.data.delimiter.charCodeAt(0) || event.which==13 ) {
+
+					// check multiple delimiters
+					var matched = false;
+					for (var i in settings.delimiters) {
+						if (event.which == event.data.delimiters[i].charCodeAt(0)) {
+							matched = true;
+						}
+					}
+
+					// check delimiter (legacy) and enter key
+					if (event.which == event.data.delimiter.charCodeAt(0) || event.which == 13) {
+						matched = true;
+					}
+
+					// check restricted characters
+					if (settings.allowedChars.length > 0) {
+						var pattern = new RegExp(settings.allowedChars, 'g');
+						if (!(pattern.test(String.fromCharCode(event.which)) || matched)) {
+							event.preventDefault();
+							return false;
+						}
+					}
+
+					if (matched) {
 					    event.preventDefault();
 						if( (event.data.minChars <= $(event.data.fake_input).val().length) && (!event.data.maxChars || (event.data.maxChars >= $(event.data.fake_input).val().length)) )
 							$(event.data.real_input).addTag($(event.data.fake_input).val(),{focus:true,unique:(settings.unique)});
